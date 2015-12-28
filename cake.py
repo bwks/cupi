@@ -11,7 +11,7 @@ import requests
 
 class CUPI(object):
     """
-    CUPI class, main class for configuring Cisco Unity
+    Class for configuring Cisco Unity
 
     example usage:
     >>> from cupi.cake import CUPI
@@ -19,6 +19,7 @@ class CUPI(object):
     >>> c.get_owner_location_oid()
     >>> '89443b75-0547-4008-8245-39c3abeaed31'
     """
+
     def __init__(self, cuc, username, password):
         """
         Sets up the connection to Cisco Unity Connection
@@ -73,7 +74,7 @@ class CUPI(object):
 
     def get_user_templates(self):
         """
-        Get user templates
+        Get user templates, used when adding users
         :return: a list of tuples of user template alias's and oid's
         """
 
