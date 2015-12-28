@@ -1,4 +1,11 @@
+"""
+Class to interface with cisco unity connection cupi api.
+Author: Brad Searle
+Version: 0.1
+"""
+
 import json
+
 import requests
 
 
@@ -64,7 +71,18 @@ class CUPI(object):
         url = '{0}/users'.format(self.url_base)
         return self.cuc.get(url).json()['User']
 
+    def get_user_templates(self):
+        """
+        Get user templates
+        :return: a list of tuples of user template alias's and oid's
+        """
 
+        url = '{0}/usertemplates'.format(self.url_base)
+        resp = self.cuc.get(url).json()
 
-
+        if resp['@total'] == '1':
+            # if there is only one result the response will not be in a list
+            return resp['UserTemplate']['Alias'], resp['UserTemplate']['ObjectId']
+        else:
+            return [(i['Alias'], i['ObjectId']) for i in resp['UserTemplate']]
 
