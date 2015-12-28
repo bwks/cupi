@@ -33,7 +33,11 @@ class CUPI(object):
         self.cuc = requests.session()
         self.cuc.auth = (username, password)
         self.cuc.verify = False
-        self.cuc.headers.update({'Accept': 'application/json', 'Connection': 'keep_alive'})
+        self.cuc.headers.update({
+            'Accept': 'application/json',
+            'Connection': 'keep_alive',
+            'Content_type': 'application/json',
+        })
 
     def get_owner_location_oid(self):
         """
@@ -86,4 +90,54 @@ class CUPI(object):
             return resp['UserTemplate']['Alias'], resp['UserTemplate']['ObjectId']
         else:
             return [(i['Alias'], i['ObjectId']) for i in resp['UserTemplate']]
+
+    def get_schedule_sets(self, mini=True):
+        """
+        Get Schedule Sets
+        :param mini: return minimal list if True else return full json response
+        :return: a list of tuples of schedule sets
+        """
+
+        url = '{0}/schedulesets'.format(self.url_base)
+        resp = self.cuc.get(url).json()
+
+        if mini:
+            return [(i['DisplayName'], i['ObjectId']) for i in resp['ScheduleSet']]
+        else:
+            return resp
+
+    def get_schedules(self, mini=True):
+        """
+        Get Schedules
+        :param mini: return minimal list if True else return full json response
+        :return: a list of tuples of schedules
+        """
+
+        url = '{0}/schedules'.format(self.url_base)
+        resp = self.cuc.get(url).json()
+
+        if mini:
+            return [(i['DisplayName'], i['ObjectId']) for i in resp['Schedule']]
+        else:
+            return resp
+
+    def add_schedule(self, display_name, owner_location_oid):
+        """
+
+        :param display_name:
+        :param owner_location_oid:
+        :return:
+        """
+
+        body = {
+            'DisplayName': display_name,
+            'OwnerLocationObjectId': owner_location_oid,
+        }
+        url = '{0}/schedulesets'.format(self.url_base)
+
+        resp = self.cuc.post(url, body=body)
+        schedule_set_oid = resp.text.split('/')[-1]
+
+        return schedule_set_oid
+
 
