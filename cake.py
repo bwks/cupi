@@ -1,7 +1,7 @@
 """
 Class to interface with cisco unity connection cupi api.
 Author: Brad Searle
-Version: 0.4.2
+Version: 0.4.3
 Dependencies:
 - requests: http://docs.python-requests.org/en/latest/
 """
@@ -80,6 +80,16 @@ class CUPI(object):
             return [(i['DisplayName'], i['ObjectId']) for i in resp['Schedule']]
         else:
             return resp
+
+    def get_schedule(self, schedule_oid):
+        """
+        Get Schedule details
+        :param schedule_oid: return minimal list if True else return full json response
+        :return: a dictionary of parameters
+        """
+
+        url = '{0}/schedules/{1}'.format(self.url_base, schedule_oid)
+        return self.cuc.get(url).json()
 
     def add_schedule(self,
                      display_name,
@@ -187,7 +197,29 @@ class CUPI(object):
                                 resp.status_code, resp.reason, resp.text)
 
                     else:
-                        return 'Schedule Successfully Added', schedule_set_oid, schedule_oid
+                        return 'Schedule successfully added', schedule_set_oid, schedule_oid
+
+    def update_schedule_holiday(self, schedule_set_oid, holiday_oid):
+        """
+        Update a schedules holiday schedule
+        :param schedule_set_oid: Schedule set OID
+        :param holiday_oid: OID of the holiday schedule to assign
+        :return:
+        """
+        url = '{0}/schedulesets/{1}/schedulesetmembers'.format(self.url_base, schedule_set_oid)
+        body = {
+            'ScheduleSetObjectId': schedule_set_oid,
+            'ScheduleObjectId': holiday_oid,
+            'Exclude': 'true'  # Must be true for holiday schedule
+        }
+
+        resp = self.cuc.post(url, json=body)
+
+        if resp.status_code == 201:
+            return 'Schedules holiday schedule successfully updated'
+        else:
+            return 'Could not map holiday to schedule: {0} {1} {2}'.format(
+                    resp.status_code, resp.reason, resp.text)
 
     def delete_schedule_set(self, schedule_set_oid):
         """
@@ -256,6 +288,26 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}'.format(self.url_base, user_oid)
+        return self.cuc.get(url).json()
+
+    def get_user_pin_settings(self, user_oid):
+        """
+        Get a users pin settings
+        :param user_oid:
+        :return:
+        """
+
+        url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
+        return self.cuc.get(url).json()
+
+    def get_user_password_settings(self, user_oid):
+        """
+        Get a users password settings
+        :param user_oid:
+        :return:
+        """
+
+        url = '{0}/users/{1}/credential/password'.format(self.url_base, user_oid)
         return self.cuc.get(url).json()
 
     def get_user_templates(self):
@@ -335,47 +387,10 @@ class CUPI(object):
         else:
             return 'User successfully added', user_oid
 
-    def delete_user(self, user_oid):
-        """
-
-        :param user_oid:
-        :return:
-        """
-
-        url = '{0}/users/{1}'.format(self.url_base, user_oid)
-        resp = self.cuc.delete(url)
-
-        if resp.status_code == 204:
-            return 'User deleted'
-        elif resp.status_code == 404:
-            return 'User not found'
-        else:
-            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
-
-    def get_user_pin_settings(self, user_oid):
-        """
-        Get a users pin settings
-        :param user_oid:
-        :return:
-        """
-
-        url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
-        return self.cuc.get(url).json()
-
-    def get_user_password_settings(self, user_oid):
-        """
-        Get a users password settings
-        :param user_oid:
-        :return:
-        """
-
-        url = '{0}/users/{1}/credential/password'.format(self.url_base, user_oid)
-        return self.cuc.get(url).json()
-
     def update_user_schedule(self, user_call_handler_oid, schedule_set_oid):
         """
-        Note: To update the ScheduleSetObjectId ,first go to the user URI,
-        then go to the callhandler URI, and then update the scheduleset.
+        Note: To update the ScheduleSetObjectId the users call handler OID is needed.
+              Get this with the get_user_call_handler_oid method
         :param user_call_handler_oid:
         :param schedule_set_oid:
         :return:
@@ -420,6 +435,23 @@ class CUPI(object):
                 return 'Pin updated successfully'
         elif resp.json()['@total'] == '0':
             return 'User directory number not found: {0}'.format(dtmf_access_id)
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+
+    def delete_user(self, user_oid):
+        """
+
+        :param user_oid:
+        :return:
+        """
+
+        url = '{0}/users/{1}'.format(self.url_base, user_oid)
+        resp = self.cuc.delete(url)
+
+        if resp.status_code == 204:
+            return 'User deleted'
+        elif resp.status_code == 404:
+            return 'User not found'
         else:
             return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
