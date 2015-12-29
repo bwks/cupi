@@ -22,19 +22,20 @@ class CUPI(object):
     >>> '89443b75-0547-4008-8245-39c3abeaed31'
     """
 
-    def __init__(self, cuc, username, password):
+    def __init__(self, cuc, username, password, verify=False):
         """
         Sets up the connection to Cisco Unity Connection
 
         :param cuc: Unity connection IP Address
         :param username: User with privilege to access rest api
         :param password: Users password
+        :param verify: Verify HTTPS connections
         """
 
         self.url_base = 'https://{0}/vmrest'.format(cuc)
         self.cuc = requests.session()
         self.cuc.auth = (username, password)
-        self.cuc.verify = False
+        self.cuc.verify = verify  # http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
         self.cuc.headers.update({
             'Accept': 'application/json',
             'Connection': 'keep_alive',
@@ -49,55 +50,6 @@ class CUPI(object):
 
         url = '{0}/locations/connectionlocations'.format(self.url_base)
         return self.cuc.get(url).json()['ConnectionLocation']['ObjectId']
-
-    def get_call_handler_template_oid(self):
-        """
-        Method to get the call handler template oid
-        :return: call handler template oid
-        """
-
-        url = '{0}/callhandlertemplates'.format(self.url_base)
-        return self.cuc.get(url).json()['CallhandlerTemplate']['ObjectId']
-
-    def get_user_call_handler_oid(self, user_oid):
-        """
-        Get the oid of a call handler assigned to a user
-        :param user_oid: oid of the user to get the call handler oid
-        :return: users call handler oid
-        """
-
-        url = '{0}/users/{1}'.format(self.url_base, user_oid)
-        return self.cuc.get(url).json()['CallHandlerObjectId']
-
-    def get_users(self, mini=True):
-        """
-        Get all users
-        :param mini: if True returns a tuple of user information
-        :return: A tuple or list of user dictionaries of user information
-        """
-
-        url = '{0}/users'.format(self.url_base)
-        resp = self.cuc.get(url).json()['User']
-
-        if mini:
-            return [(i['DisplayName'], i['DtmfAccessId'], i['ObjectId'], i['TimeZone']) for i in resp]
-        else:
-            return resp
-
-    def get_user_templates(self):
-        """
-        Get user templates, used when adding users
-        :return: a list of tuples of user template alias's and oid's
-        """
-
-        url = '{0}/usertemplates'.format(self.url_base)
-        resp = self.cuc.get(url).json()
-
-        if resp['@total'] == '1':
-            # if there is only one result the response will not be in a list
-            return [(resp['UserTemplate']['Alias'], resp['UserTemplate']['ObjectId'])]
-        else:
-            return [(i['Alias'], i['ObjectId']) for i in resp['UserTemplate']]
 
     def get_schedule_sets(self, mini=True):
         """
@@ -269,6 +221,46 @@ class CUPI(object):
         else:
             return 'Unknown Result {0} {1}'.format(resp.status_code, resp.reason)
 
+    def get_user_call_handler_oid(self, user_oid):
+        """
+        Get the oid of a call handler assigned to a user
+        :param user_oid: oid of the user to get the call handler oid
+        :return: users call handler oid
+        """
+
+        url = '{0}/users/{1}'.format(self.url_base, user_oid)
+        return self.cuc.get(url).json()['CallHandlerObjectId']
+
+    def get_users(self, mini=True):
+        """
+        Get all users
+        :param mini: if True returns a tuple of user information
+        :return: A tuple or list of user dictionaries of user information
+        """
+
+        url = '{0}/users'.format(self.url_base)
+        resp = self.cuc.get(url).json()['User']
+
+        if mini:
+            return [(i['DisplayName'], i['DtmfAccessId'], i['ObjectId'], i['TimeZone']) for i in resp]
+        else:
+            return resp
+
+    def get_user_templates(self):
+        """
+        Get user templates, used when adding users
+        :return: a list of tuples of user template alias's and oid's
+        """
+
+        url = '{0}/usertemplates'.format(self.url_base)
+        resp = self.cuc.get(url).json()
+
+        if resp['@total'] == '1':
+            # if there is only one result the response will not be in a list
+            return [(resp['UserTemplate']['Alias'], resp['UserTemplate']['ObjectId'])]
+        else:
+            return [(i['Alias'], i['ObjectId']) for i in resp['UserTemplate']]
+
     def add_user(self,
                  display_name,
                  dtmf_access_id,
@@ -399,8 +391,24 @@ class CUPI(object):
         else:
             return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
+    def get_call_handler_template_oid(self):
+        """
+        Method to get the call handler template oid
+        :return: call handler template oid
+        """
 
+        url = '{0}/callhandlertemplates'.format(self.url_base)
+        return self.cuc.get(url).json()['CallhandlerTemplate']['ObjectId']
 
+    def add_call_handler(self, display_name, dtmf_access_id, schedule_set_oid, call_handler_template_oid):
 
+        url = '{0}/handlers/callhandlers?templateObjectId={1}'.format(self.url_base, call_handler_template_oid)
+        body = {
+            'DisplayName': display_name,
+            'DtmfAccessId': dtmf_access_id,
+            'ScheduleSetObjectId': schedule_set_oid,
+        }
 
-
+        resp = self.cuc.post(url, json=body)
+        call_handler_oid = resp.text.split('/')[-1]
+        return call_handler_oid
