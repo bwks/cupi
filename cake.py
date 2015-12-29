@@ -1,7 +1,7 @@
 """
 Class to interface with cisco unity connection cupi api.
 Author: Brad Searle
-Version: 0.3
+Version: 0.3.1
 Dependencies:
 - requests: http://docs.python-requests.org/en/latest/
 """
@@ -80,7 +80,7 @@ class CUPI(object):
         resp = self.cuc.get(url).json()['User']
 
         if mini:
-            return [(i['DisplayName'], i['ObjectId'], i['TimeZone']) for i in resp]
+            return [(i['DisplayName'], i['DtmfAccessId'], i['ObjectId'], i['TimeZone']) for i in resp]
         else:
             return resp
 
@@ -321,9 +321,7 @@ class CUPI(object):
         elif cred_must_change == 'false':
 
             url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
-            body = {
-                'CredMustChange': 'false',
-            }
+            body = {'CredMustChange': 'false'}
 
             resp = self.cuc.put(url, json=body)
             if resp.status_code != 204:
@@ -352,7 +350,7 @@ class CUPI(object):
 
     def get_user_pin_settings(self, user_oid):
         """
-        Get a users password settings
+        Get a users pin settings
         :param user_oid:
         :return:
         """
@@ -369,5 +367,40 @@ class CUPI(object):
 
         url = '{0}/users/{1}/credential/password'.format(self.url_base, user_oid)
         return self.cuc.get(url).json()
+
+    def change_user_vm_pin(self, dtmf_access_id, new_pin):
+        """
+
+        :param dtmf_access_id:
+        :param new_pin:
+        :return:
+        """
+
+        # find user oid by searching with the directory number
+        url = '{0}/users?query=(DtmfAccessId%20is%20{1})'.format(self.url_base, dtmf_access_id)
+        resp = self.cuc.get(url)
+
+        if resp.status_code != 200:
+            return 'Something went wrong: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+        elif resp.json()['@total'] == '1':
+            user_oid = resp.json()['User']['ObjectId']
+
+            url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
+            body = {'Credentials': new_pin}
+
+            resp = self.cuc.put(url, json=body)
+
+            if resp.status_code != 204:
+                return 'Something went wrong: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+            else:
+                return 'Pin Updated Successfully'
+        elif resp.json()['@total'] == '0':
+            return 'User directory number not found: {0}'.format(dtmf_access_id)
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+
+
+
+
 
 
