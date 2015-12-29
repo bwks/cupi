@@ -132,7 +132,7 @@ class CUPI(object):
         schedule_set_oid = resp.text.split('/')[-1]
 
         if resp.status_code != 201:
-            return 'Could not add schedule set {0} {1}'.format(resp.status_code, resp.reason)
+            return 'Could not add schedule set: {0} {1}'.format(resp.status_code, resp.reason, resp.text)
 
         # 2) Add a schedule
         else:
@@ -147,7 +147,7 @@ class CUPI(object):
             schedule_oid = resp.text.split('/')[-1]
 
             if resp.status_code != 201:
-                return 'Could not add schedule {0} {1}'.format(resp.status_code, resp.reason)
+                return 'Could not add schedule: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
             # 3) Map the schedule to the schedule set with a schedule set map
             else:
@@ -161,7 +161,8 @@ class CUPI(object):
                 resp = self.cuc.post(url, json=body)
 
                 if resp.status_code != 201:
-                    return 'Could not map schedule to schedule set {0} {1}'.format(resp.status_code, resp.reason)
+                    return 'Could not map schedule to schedule set: {0} {1} {2}'.format(
+                            resp.status_code, resp.reason, resp.text)
 
                 # 4) Add a schedule detail to the schedule
                 else:
@@ -182,7 +183,8 @@ class CUPI(object):
                     resp = self.cuc.post(url, json=body)
 
                     if resp.status_code != 201:
-                        return 'Could not add schedule detail {0} {1}'.format(resp.status_code, resp.reason)
+                        return 'Could not add schedule detail: {0} {1} {2}'.format(
+                                resp.status_code, resp.reason, resp.text)
 
                     else:
                         return 'Schedule Successfully Added', schedule_set_oid, schedule_oid
@@ -202,7 +204,7 @@ class CUPI(object):
         elif resp.status_code == 404:
             return 'Schedule set not found'
         else:
-            return 'Unknown Result {0} {1}'.format(resp.status_code, resp.reason)
+            return 'Unknown Result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def delete_schedule(self, schedule_oid):
         """
@@ -219,7 +221,7 @@ class CUPI(object):
         elif resp.status_code == 404:
             return 'Schedule not found'
         else:
-            return 'Unknown Result {0} {1}'.format(resp.status_code, resp.reason)
+            return 'Unknown Result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_user_call_handler_oid(self, user_oid):
         """
@@ -309,7 +311,7 @@ class CUPI(object):
         user_oid = resp.text.split('/')[-1]
 
         if resp.status_code != 201:
-            return 'Could not add user {0} {1}'.format(resp.status_code, resp.reason)
+            return 'Could not add user: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
         elif cred_must_change == 'false':
 
             url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
@@ -317,7 +319,7 @@ class CUPI(object):
 
             resp = self.cuc.put(url, json=body)
             if resp.status_code != 204:
-                return 'Could not update VM PIN Property'.format(resp.status_code, resp.reason)
+                return 'Could not update VM PIN Property: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
             else:
                 return 'User Successfully Added', user_oid
         else:
@@ -338,7 +340,7 @@ class CUPI(object):
         elif resp.status_code == 404:
             return 'User not found'
         else:
-            return 'Unknown Result {0} {1}'.format(resp.status_code, resp.reason)
+            return 'Unknown Result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_user_pin_settings(self, user_oid):
         """
@@ -411,4 +413,8 @@ class CUPI(object):
 
         resp = self.cuc.post(url, json=body)
         call_handler_oid = resp.text.split('/')[-1]
-        return call_handler_oid
+
+        if resp.status_code != 201:
+            return 'Cannot add call handler: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+        else:
+            return call_handler_oid
