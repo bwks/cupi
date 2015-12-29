@@ -110,7 +110,13 @@ class CUPI(object):
         2) Add a schedule
         3) Map the schedule to the scheduleset with a schedule set map
         4) Add a schedule detail to the schedule
+
         Default schedule times are Monday - Friday 8.30am - 5.00pm
+        Start/Finish Times are calculated as number of minutes past midnight
+        IE: 8:30am is 510 minutes past midnight
+        Minute portion must be in 5 minute blocks
+        IE: 8:31am = 511 == WAH WAH
+
         :param display_name: Schedule display name
         :param owner_location_oid: Get this oid with the get_owner_location_oid method
         :param is_holiday: Is this schedule a holiday schedule true/false
