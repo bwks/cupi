@@ -1,7 +1,7 @@
 """
 Class to interface with cisco unity connection cupi api.
 Author: Brad Searle
-Version: 0.3.1
+Version: 0.4.0
 Dependencies:
 - requests: http://docs.python-requests.org/en/latest/
 """
@@ -204,7 +204,7 @@ class CUPI(object):
         elif resp.status_code == 404:
             return 'Schedule set not found'
         else:
-            return 'Unknown Result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def delete_schedule(self, schedule_oid):
         """
@@ -221,7 +221,7 @@ class CUPI(object):
         elif resp.status_code == 404:
             return 'Schedule not found'
         else:
-            return 'Unknown Result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_user_call_handler_oid(self, user_oid):
         """
@@ -319,11 +319,11 @@ class CUPI(object):
 
             resp = self.cuc.put(url, json=body)
             if resp.status_code != 204:
-                return 'Could not update VM PIN Property: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+                return 'Could not update VM PIN property: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
             else:
-                return 'User Successfully Added', user_oid
+                return 'User successfully added', user_oid
         else:
-            return 'User Successfully Added', user_oid
+            return 'User successfully added', user_oid
 
     def delete_user(self, user_oid):
         """
@@ -340,7 +340,7 @@ class CUPI(object):
         elif resp.status_code == 404:
             return 'User not found'
         else:
-            return 'Unknown Result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_user_pin_settings(self, user_oid):
         """
@@ -387,7 +387,7 @@ class CUPI(object):
             if resp.status_code != 204:
                 return 'Something went wrong: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
             else:
-                return 'Pin Updated Successfully'
+                return 'Pin updated successfully'
         elif resp.json()['@total'] == '0':
             return 'User directory number not found: {0}'.format(dtmf_access_id)
         else:
@@ -402,8 +402,48 @@ class CUPI(object):
         url = '{0}/callhandlertemplates'.format(self.url_base)
         return self.cuc.get(url).json()['CallhandlerTemplate']['ObjectId']
 
-    def add_call_handler(self, display_name, dtmf_access_id, schedule_set_oid, call_handler_template_oid):
+    def get_call_handlers(self, mini=True):
+        """
 
+        :param mini:
+        :return:
+        """
+        url = '{0}/handlers/callhandlers'.format(self.url_base)
+        resp = self.cuc.get(url).json()
+
+        if mini:
+            return [(i['DisplayName'], i['ObjectId']) for i in resp['Callhandler']]
+        else:
+            return resp
+
+    def get_call_handler_greeting(self, call_handler_oid, greeting='Standard'):
+        """
+
+        :param call_handler_oid:
+        :param greeting:
+        :return:
+        """
+        url = '{0}/handlers/callhandlers/{1}/greetings/{2}'.format(self.url_base, call_handler_oid, greeting)
+        return self.cuc.get(url).json()
+
+    def get_call_handler_greetings(self, call_handler_oid):
+        """
+
+        :param call_handler_oid:
+        :return:
+        """
+        url = '{0}/handlers/callhandlers/{1}/greetings'.format(self.url_base, call_handler_oid)
+        return self.cuc.get(url).json()
+
+    def add_call_handler(self, display_name, dtmf_access_id, schedule_set_oid, call_handler_template_oid):
+        """
+
+        :param display_name:
+        :param dtmf_access_id:
+        :param schedule_set_oid:
+        :param call_handler_template_oid:
+        :return:
+        """
         url = '{0}/handlers/callhandlers?templateObjectId={1}'.format(self.url_base, call_handler_template_oid)
         body = {
             'DisplayName': display_name,
@@ -417,4 +457,102 @@ class CUPI(object):
         if resp.status_code != 201:
             return 'Cannot add call handler: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
         else:
-            return call_handler_oid
+            return 'Call handler added successfully', call_handler_oid
+
+    def update_call_handler_transfer_options(self, call_handler_oid, transfer_to_dn, rule='Standard', body={}):
+        """
+
+        :param transfer_to_dn:
+        :param call_handler_oid:
+        :param body:
+        :param rule:
+        :return:
+        """
+
+        url = '{0}/handlers/callhandlers/{1}/transferoptions/{2}'.format(self.url_base, call_handler_oid, rule)
+        if not body:
+            body = {
+                'Action': '1',
+                'Extension': transfer_to_dn,
+                'PlayTransferPrompt': 'false'
+            }
+
+        resp = self.cuc.put(url, json=body)
+        if resp.status_code == 204:
+            return 'Call handler transfer rule updated'
+        else:
+            return 'Call handler not updated: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+
+    def update_call_handler_greeting(self,
+                                     call_handler_oid,
+                                     user_call_handler_oid,
+                                     greeting='Off%20Hours',
+                                     time_expires='',
+                                     enabled='true',
+                                     after_greeting_action='2',
+                                     after_greeting_target_con='PHGreeting',
+                                     enable_transfer='false',
+                                     ignore_digits='true',
+                                     play_recorded_msg_prompt='false',
+                                     play_what='1',
+                                     reprompt_delay='2',
+                                     reprompts='0',
+                                     body={}):
+        """
+
+        :param call_handler_oid:
+        :param user_call_handler_oid: get with get_user_call_handler_oid method
+        :param greeting:
+        :param time_expires: set to '' which equals NULL, used with enabled parameter
+        :param enabled: set to true, must be used with time expires set to NULL to work.
+                        Note: Standard greeting should never be set to false.
+        :param after_greeting_action:
+        :param after_greeting_target_con:
+        :param enable_transfer:
+        :param ignore_digits:
+        :param play_recorded_msg_prompt:
+        :param play_what:
+        :param reprompt_delay:
+        :param reprompts:
+        :param body:
+        :return:
+        """
+        url = '{0}/handlers/callhandlers/{1}/greetings/{2}'.format(self.url_base, call_handler_oid, greeting)
+        if not body:
+            body = {
+                'TimeExpires': time_expires,
+                'Enabled': enabled,
+                'AfterGreetingAction': after_greeting_action,
+                'AfterGreetingTargetConversation': after_greeting_target_con,
+                'AfterGreetingTargetHandlerObjectId': user_call_handler_oid,
+                'EnableTransfer': enable_transfer,
+                'IgnoreDigits': ignore_digits,
+                'PlayRecordMessagePrompt': play_recorded_msg_prompt,
+                'PlayWhat': play_what,
+                'RepromptDelay': reprompt_delay,
+                'Reprompts': reprompts,
+            }
+
+        resp = self.cuc.put(url, json=body)
+        if resp.status_code == 204:
+            return 'Call handler {0} greeting updated'.format(greeting)
+        else:
+            return 'Call handler {0} greeting not updated: {1} {2} {3}'.format(
+                    greeting, resp.status_code, resp.reason, resp.text)
+
+    def delete_call_handler(self, call_handler_oid):
+        """
+
+        :param call_handler_oid:
+        :return:
+        """
+
+        url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, call_handler_oid)
+        resp = self.cuc.delete(url)
+
+        if resp.status_code == 204:
+            return 'Call handler deleted'
+        elif resp.status_code == 404:
+            return 'Call handler not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
