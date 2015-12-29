@@ -1,7 +1,7 @@
 """
 Class to interface with cisco unity connection cupi api.
 Author: Brad Searle
-Version: 0.4.0
+Version: 0.4.1
 Dependencies:
 - requests: http://docs.python-requests.org/en/latest/
 """
@@ -556,3 +556,47 @@ class CUPI(object):
             return 'Call handler not found'
         else:
             return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+
+    def get_caller_input(self, call_handler_oid):
+        """
+
+        :param call_handler_oid:
+        :return:
+        """
+
+        url = '{0}/handlers/callhandlers/{1}/menuentries'.format(self.url_base, call_handler_oid)
+        return self.cuc.get(url).json()
+
+    def update_caller_input(self,
+                                         call_handler_oid,
+                                         target_call_handler_oid,
+                                         input_key='1',
+                                         action='2',
+                                         target_conversation='PHGreeting',
+                                         body={}):
+        """
+
+        :param call_handler_oid:
+        :param target_call_handler_oid: Target users call handler oid.
+                                        Get with get_user_call_handler_oid method
+        :param input_key:
+        :param action:
+        :param target_conversation:
+        :param body:
+        :return:
+        """
+
+        url = '{0}/handlers/callhandlers/{1}/menuentries/{2}'.format(self.url_base, call_handler_oid, input_key)
+        if not body:
+            body = {
+                'Action': action,
+                'TargetConversation': target_conversation,
+                'TargetHandlerObjectId': target_call_handler_oid,
+            }
+
+        resp = self.cuc.put(url, json=body)
+        if resp.status_code == 204:
+            return 'Call handler caller input updated'
+        else:
+            return 'Call handler caller input not updated: {1} {2} {3}'.format(
+                    resp.status_code, resp.reason, resp.text)
