@@ -350,7 +350,7 @@ class CUPI(object):
         else:
             return 'Unknown Result {0} {1}'.format(resp.status_code, resp.reason)
 
-    def get_user_password_settings(self, user_oid):
+    def get_user_pin_settings(self, user_oid):
         """
         Get a users password settings
         :param user_oid:
@@ -360,5 +360,14 @@ class CUPI(object):
         url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
         return self.cuc.get(url).json()
 
+    def get_user_password_settings(self, user_oid):
+        """
+        Get a users password settings
+        :param user_oid:
+        :return:
+        """
+
+        url = '{0}/users/{1}/credential/password'.format(self.url_base, user_oid)
+        return self.cuc.get(url).json()
 
 
