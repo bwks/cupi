@@ -1,7 +1,7 @@
 """
 Class to interface with cisco unity connection cupi api.
 Author: Brad Searle
-Version: 0.4.1
+Version: 0.4.2
 Dependencies:
 - requests: http://docs.python-requests.org/en/latest/
 """
@@ -248,6 +248,16 @@ class CUPI(object):
         else:
             return resp
 
+    def get_user(self, user_oid):
+        """
+        Get user info
+        :param user_oid: OID of the user
+        :return: A dictionary of user parameters
+        """
+
+        url = '{0}/users/{1}'.format(self.url_base, user_oid)
+        return self.cuc.get(url).json()
+
     def get_user_templates(self):
         """
         Get user templates, used when adding users
@@ -362,6 +372,26 @@ class CUPI(object):
         url = '{0}/users/{1}/credential/password'.format(self.url_base, user_oid)
         return self.cuc.get(url).json()
 
+    def update_user_schedule(self, user_call_handler_oid, schedule_set_oid):
+        """
+        Note: To update the ScheduleSetObjectId ,first go to the user URI,
+        then go to the callhandler URI, and then update the scheduleset.
+        :param user_call_handler_oid:
+        :param schedule_set_oid:
+        :return:
+        """
+        url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, user_call_handler_oid)
+        body = {
+            'ScheduleSetObjectId': schedule_set_oid,
+        }
+
+        resp = self.cuc.put(url, json=body)
+
+        if resp.status_code == 204:
+            return 'User schedule updated'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+
     def change_user_vm_pin(self, dtmf_access_id, new_pin):
         """
 
@@ -416,6 +446,15 @@ class CUPI(object):
         else:
             return resp
 
+    def get_call_handler(self, call_handler_oid):
+        """
+
+        :param call_handler_oid:
+        :return:
+        """
+        url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, call_handler_oid)
+        return self.cuc.get(url).json()
+
     def get_call_handler_greeting(self, call_handler_oid, greeting='Standard'):
         """
 
@@ -435,13 +474,13 @@ class CUPI(object):
         url = '{0}/handlers/callhandlers/{1}/greetings'.format(self.url_base, call_handler_oid)
         return self.cuc.get(url).json()
 
-    def add_call_handler(self, display_name, dtmf_access_id, schedule_set_oid, call_handler_template_oid):
+    def add_call_handler(self, display_name, dtmf_access_id, call_handler_template_oid, schedule_set_oid):
         """
 
         :param display_name:
         :param dtmf_access_id:
-        :param schedule_set_oid:
         :param call_handler_template_oid:
+        :param schedule_set_oid:
         :return:
         """
         url = '{0}/handlers/callhandlers?templateObjectId={1}'.format(self.url_base, call_handler_template_oid)
@@ -568,12 +607,12 @@ class CUPI(object):
         return self.cuc.get(url).json()
 
     def update_caller_input(self,
-                                         call_handler_oid,
-                                         target_call_handler_oid,
-                                         input_key='1',
-                                         action='2',
-                                         target_conversation='PHGreeting',
-                                         body={}):
+                            call_handler_oid,
+                            target_call_handler_oid,
+                            input_key='1',
+                            action='2',
+                            target_conversation='PHGreeting',
+                            body={}):
         """
 
         :param call_handler_oid:
