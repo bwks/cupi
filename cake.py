@@ -1,7 +1,9 @@
 """
 Class to interface with cisco unity connection cupi api.
 Author: Brad Searle
-Version: 0.2
+Version: 0.3
+Dependencies:
+- requests: http://docs.python-requests.org/en/latest/
 """
 
 import json
@@ -67,14 +69,20 @@ class CUPI(object):
         url = '{0}/users/{1}'.format(self.url_base, user_oid)
         return self.cuc.get(url).json()['CallHandlerObjectId']
 
-    def get_users(self):
+    def get_users(self, mini=True):
         """
         Get all users
-        :return: A list of user dictionaries
+        :param mini: if True returns a tuple of user information
+        :return: A tuple or list of user dictionaries of user information
         """
 
         url = '{0}/users'.format(self.url_base)
-        return self.cuc.get(url).json()['User']
+        resp = self.cuc.get(url).json()['User']
+
+        if mini:
+            return [(i['DisplayName'], i['ObjectId'], i['TimeZone']) for i in resp]
+        else:
+            return resp
 
     def get_user_templates(self):
         """
@@ -87,7 +95,7 @@ class CUPI(object):
 
         if resp['@total'] == '1':
             # if there is only one result the response will not be in a list
-            return resp['UserTemplate']['Alias'], resp['UserTemplate']['ObjectId']
+            return [(resp['UserTemplate']['Alias'], resp['UserTemplate']['ObjectId'])]
         else:
             return [(i['Alias'], i['ObjectId']) for i in resp['UserTemplate']]
 
@@ -153,11 +161,11 @@ class CUPI(object):
         :param is_active_friday: Schedule active Friday true/false
         :param is_active_saturday: Schedule active Saturday true/false
         :param is_active_sunday: Schedule active Sunday true/false
-        :return: Result of adding the schedule
+        :return: Result of adding the schedule, & schedule_set_oid, schedule_oid if successful
 
         example usage:
                                     display_name                         owner_location_oid
-        >>> c.add_schedule('test_schedule M-F 8.30am - 5.00pm', '89443b75-0547-4008-8245-39c3abeaed31')
+        >>> c.add_schedule('Test Schedule M-F 8.30am - 5.00pm', '89443b75-0547-4008-8245-39c3abeaed31')
         >>> 'Schedule Successfully Added'
         """
 
@@ -170,7 +178,6 @@ class CUPI(object):
 
         resp = self.cuc.post(url, json=body)
         schedule_set_oid = resp.text.split('/')[-1]
-        print(schedule_set_oid)
 
         if resp.status_code != 201:
             return 'Could not add schedule set {0} {1}'.format(resp.status_code, resp.reason)
@@ -186,7 +193,6 @@ class CUPI(object):
 
             resp = self.cuc.post(url, json=body)
             schedule_oid = resp.text.split('/')[-1]
-            print(schedule_oid)
 
             if resp.status_code != 201:
                 return 'Could not add schedule {0} {1}'.format(resp.status_code, resp.reason)
@@ -227,7 +233,7 @@ class CUPI(object):
                         return 'Could not add schedule detail {0} {1}'.format(resp.status_code, resp.reason)
 
                     else:
-                        return 'Schedule Successfully Added'
+                        return 'Schedule Successfully Added', schedule_set_oid, schedule_oid
 
     def delete_schedule_set(self, schedule_set_oid):
         """
@@ -262,3 +268,97 @@ class CUPI(object):
             return 'Schedule not found'
         else:
             return 'Unknown Result {0} {1}'.format(resp.status_code, resp.reason)
+
+    def add_user(self,
+                 display_name,
+                 dtmf_access_id,
+                 first_name,
+                 last_name,
+                 user_template,
+                 timezone,
+                 is_vm_enrolled='false',
+                 country='AU',
+                 use_default_timezone='false',
+                 cred_must_change='false'):
+        """
+        Add a user
+        :param display_name:
+        :param dtmf_access_id:
+        :param first_name:
+        :param last_name:
+        :param user_template:
+        :param timezone:
+        :param is_vm_enrolled:
+        :param country:
+        :param use_default_timezone:
+        :param cred_must_change:
+        :return: Result & user_oid if successful
+
+        example usage:
+                                 dtmf_access_id             last_name                       timezone
+                      display_name     V      first_name        V         user_template         V
+        >>> c.add_user('Test User', '77777', 'First Name', 'Last Name', 'Test User Template', '255')
+        >>> 'e16922d4-aabf-4dec-9e83-9abaa64dfa02'
+        """
+        url = '{0}/users?templateAlias={1}'.format(self.url_base, user_template)
+        body = {
+            'Alias': display_name,
+            'DisplayName': display_name,
+            'DtmfAccessId': dtmf_access_id,
+            'FirstName': first_name,
+            'LastName': last_name,
+            'IsVmEnrolled': is_vm_enrolled,
+            'Country': country,
+            'UseDefaultTimeZone': use_default_timezone,
+            'TimeZone': timezone,
+        }
+
+        resp = self.cuc.post(url, json=body)
+        user_oid = resp.text.split('/')[-1]
+
+        if resp.status_code != 201:
+            return 'Could not add user {0} {1}'.format(resp.status_code, resp.reason)
+        elif cred_must_change == 'false':
+
+            url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
+            body = {
+                'CredMustChange': 'false',
+            }
+
+            resp = self.cuc.put(url, json=body)
+            if resp.status_code != 204:
+                return 'Could not update VM PIN Property'.format(resp.status_code, resp.reason)
+            else:
+                return 'User Successfully Added', user_oid
+        else:
+            return 'User Successfully Added', user_oid
+
+    def delete_user(self, user_oid):
+        """
+
+        :param user_oid:
+        :return:
+        """
+
+        url = '{0}/users/{1}'.format(self.url_base, user_oid)
+        resp = self.cuc.delete(url)
+
+        if resp.status_code == 204:
+            return 'User deleted'
+        elif resp.status_code == 404:
+            return 'User not found'
+        else:
+            return 'Unknown Result {0} {1}'.format(resp.status_code, resp.reason)
+
+    def get_user_password_settings(self, user_oid):
+        """
+        Get a users password settings
+        :param user_oid:
+        :return:
+        """
+
+        url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
+        return self.cuc.get(url).json()
+
+
+
