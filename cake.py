@@ -321,7 +321,13 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}'.format(self.url_base, user_oid)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return 'User not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_user_pin_settings(self, user_oid):
         """

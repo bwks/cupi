@@ -63,3 +63,17 @@ class TestCUPI(unittest.TestCase):
     def test_get_users_method_mini_returns_list(self):
         result = self.cuc.get_users(mini=True)
         self.assertTrue(isinstance(result, list))
+
+    def test_get_user_call_handler_oid_returns_non_empty_string(self):
+        user_oid = self.cuc.get_users(mini=True)[0][2]
+        result = self.cuc.get_user_call_handler_oid(user_oid)
+        self.assertIsNot(result, '')
+
+    def test_get_user_method_returns_schedule_oid(self):
+        user_oid = self.cuc.get_users(mini=True)[0][2]
+        result = self.cuc.get_user(user_oid)['ObjectId']
+        self.assertEqual(result, user_oid)
+
+    def test_get_user_method_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_user('1234567890')
+        self.assertEqual(result, 'User not found')
