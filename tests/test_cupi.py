@@ -47,3 +47,12 @@ class TestCUPI(unittest.TestCase):
         result = self.cuc.get_schedules(mini=True)
         self.assertTrue(isinstance(result, list))
 
+    def test_get_schedule_method_returns_schedule_oid(self):
+        schedule_oid = self.cuc.get_schedules(mini=True)[0][1]
+        result = self.cuc.get_schedule(schedule_oid)['ObjectId']
+        self.assertEqual(result, schedule_oid)
+
+    def test_get_schedule_method_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_schedule('1234567890')
+        self.assertEqual(result, 'Schedule not found')
+

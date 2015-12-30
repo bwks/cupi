@@ -110,7 +110,13 @@ class CUPI(object):
         """
 
         url = '{0}/schedules/{1}'.format(self.url_base, schedule_oid)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return 'Schedule not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def add_schedule(self,
                      display_name,
