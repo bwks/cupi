@@ -54,8 +54,13 @@ class CUPI(object):
         return resp.status_code
 
     def get_languages(self):
+        """
+        Get a dictionary of languages
+        :return: tuple of status code & dictionary of languages
+        """
         url = '{0}/languagemap'.format(self.url_base)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
+        return resp.status_code, resp.json()
 
     def get_owner_location_oid(self):
         """
