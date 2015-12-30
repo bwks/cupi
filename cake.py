@@ -54,13 +54,12 @@ class CUPI(object):
         return resp.status_code
 
     def get_languages(self):
-        url = '{0}/languagemap'.format(self.url_base, timeout=self.timeout)
-        return self.cuc.get(url).json()
+        url = '{0}/languagemap'.format(self.url_base)
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def get_owner_location_oid(self):
         """
         Get the owner location oid. This is needed for creating schedules
-        :param timeout:
         :return: owner location oid
         """
 
