@@ -44,12 +44,17 @@ class CUPI(object):
             'Content_type': 'application/json',
         })
 
-        # Test connection to CUC
-        url = '{0}/locations/connectionlocations'.format(self.url_base)
-        self.cuc.get(url, timeout=self.timeout)
+    def online_test(self):
+        """
+        Test if CUC API is available
+        :return: status code 200
+        """
+        url = '{0}/cluster'.format(self.url_base)
+        resp = self.cuc.get(url, timeout=self.timeout)
+        return resp.status_code
 
     def get_languages(self):
-        url = '{0}/languagemap'.format(self.url_base)
+        url = '{0}/languagemap'.format(self.url_base, timeout=self.timeout)
         return self.cuc.get(url).json()
 
     def get_owner_location_oid(self):
@@ -70,7 +75,7 @@ class CUPI(object):
         """
 
         url = '{0}/schedulesets'.format(self.url_base)
-        resp = self.cuc.get(url).json()
+        resp = self.cuc.get(url, timeout=self.timeout).json()
 
         if mini:
             return [(i['DisplayName'], i['ObjectId']) for i in resp['ScheduleSet']]
@@ -85,7 +90,7 @@ class CUPI(object):
         """
 
         url = '{0}/schedules'.format(self.url_base)
-        resp = self.cuc.get(url).json()
+        resp = self.cuc.get(url, timeout=self.timeout).json()
 
         if mini:
             return [(i['DisplayName'], i['ObjectId']) for i in resp['Schedule']]
@@ -100,7 +105,7 @@ class CUPI(object):
         """
 
         url = '{0}/schedules/{1}'.format(self.url_base, schedule_oid)
-        return self.cuc.get(url).json()
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def add_schedule(self,
                      display_name,
@@ -155,7 +160,7 @@ class CUPI(object):
             'OwnerLocationObjectId': owner_location_oid,
         }
 
-        resp = self.cuc.post(url, json=body)
+        resp = self.cuc.post(url, json=body, timeout=self.timeout)
         schedule_set_oid = resp.text.split('/')[-1]
 
         if resp.status_code != 201:
@@ -170,7 +175,7 @@ class CUPI(object):
                 'IsHoliday': is_holiday
             }
 
-            resp = self.cuc.post(url, json=body)
+            resp = self.cuc.post(url, json=body, timeout=self.timeout)
             schedule_oid = resp.text.split('/')[-1]
 
             if resp.status_code != 201:
@@ -185,7 +190,7 @@ class CUPI(object):
                     'Exclude': 'false'  # Must be false for main schedule
                 }
 
-                resp = self.cuc.post(url, json=body)
+                resp = self.cuc.post(url, json=body, timeout=self.timeout)
 
                 if resp.status_code != 201:
                     return 'Could not map schedule to schedule set: {0} {1} {2}'.format(
@@ -207,7 +212,7 @@ class CUPI(object):
                         'IsActiveSunday': is_active_sunday,
                     }
 
-                    resp = self.cuc.post(url, json=body)
+                    resp = self.cuc.post(url, json=body, timeout=self.timeout)
 
                     if resp.status_code != 201:
                         return 'Could not add schedule detail: {0} {1} {2}'.format(
@@ -230,7 +235,7 @@ class CUPI(object):
             'Exclude': 'true'  # Must be true for holiday schedule
         }
 
-        resp = self.cuc.post(url, json=body)
+        resp = self.cuc.post(url, json=body, timeout=self.timeout)
 
         if resp.status_code == 201:
             return 'Schedules holiday schedule successfully updated'
@@ -247,7 +252,7 @@ class CUPI(object):
 
         url = '{0}/schedulesets/{1}'.format(self.url_base, schedule_set_oid)
 
-        resp = self.cuc.delete(url)
+        resp = self.cuc.delete(url, timeout=self.timeout)
         if resp.status_code == 204:
             return 'Schedule set deleted'
         elif resp.status_code == 404:
@@ -264,7 +269,7 @@ class CUPI(object):
 
         url = '{0}/schedules/{1}'.format(self.url_base, schedule_oid)
 
-        resp = self.cuc.delete(url)
+        resp = self.cuc.delete(url, timeout=self.timeout)
         if resp.status_code == 204:
             return 'Schedule deleted'
         elif resp.status_code == 404:
@@ -280,7 +285,7 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}'.format(self.url_base, user_oid)
-        return self.cuc.get(url).json()['CallHandlerObjectId']
+        return self.cuc.get(url, timeout=self.timeout).json()['CallHandlerObjectId']
 
     def get_users(self, mini=True):
         """
@@ -290,7 +295,7 @@ class CUPI(object):
         """
 
         url = '{0}/users'.format(self.url_base)
-        resp = self.cuc.get(url).json()['User']
+        resp = self.cuc.get(url, timeout=self.timeout).json()['User']
 
         if mini:
             return [(i['DisplayName'], i['DtmfAccessId'], i['ObjectId'], i['TimeZone']) for i in resp]
@@ -305,7 +310,7 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}'.format(self.url_base, user_oid)
-        return self.cuc.get(url).json()
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def get_user_pin_settings(self, user_oid):
         """
@@ -315,7 +320,7 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
-        return self.cuc.get(url).json()
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def get_user_password_settings(self, user_oid):
         """
@@ -325,7 +330,7 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}/credential/password'.format(self.url_base, user_oid)
-        return self.cuc.get(url).json()
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def get_user_templates(self):
         """
@@ -334,7 +339,7 @@ class CUPI(object):
         """
 
         url = '{0}/usertemplates'.format(self.url_base)
-        resp = self.cuc.get(url).json()
+        resp = self.cuc.get(url, timeout=self.timeout).json()
 
         if resp['@total'] == '1':
             # if there is only one result the response will not be in a list
@@ -386,7 +391,7 @@ class CUPI(object):
             'TimeZone': timezone,
         }
 
-        resp = self.cuc.post(url, json=body)
+        resp = self.cuc.post(url, json=body, timeout=self.timeout)
         user_oid = resp.text.split('/')[-1]
 
         if resp.status_code != 201:
@@ -396,7 +401,7 @@ class CUPI(object):
             url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
             body = {'CredMustChange': 'false'}
 
-            resp = self.cuc.put(url, json=body)
+            resp = self.cuc.put(url, json=body, timeout=self.timeout)
             if resp.status_code != 204:
                 return 'Could not update VM PIN property: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
             else:
@@ -415,7 +420,7 @@ class CUPI(object):
         url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, user_call_handler_oid)
         body = {'ScheduleSetObjectId': schedule_set_oid}
 
-        resp = self.cuc.put(url, json=body)
+        resp = self.cuc.put(url, json=body, timeout=self.timeout)
 
         if resp.status_code == 204:
             return 'User schedule updated'
@@ -432,7 +437,7 @@ class CUPI(object):
 
         # find user oid by searching with the directory number
         url = '{0}/users?query=(DtmfAccessId%20is%20{1})'.format(self.url_base, dtmf_access_id)
-        resp = self.cuc.get(url)
+        resp = self.cuc.get(url, timeout=self.timeout)
 
         if resp.status_code != 200:
             return 'Something went wrong: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
@@ -442,7 +447,7 @@ class CUPI(object):
             url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
             body = {'Credentials': new_pin}
 
-            resp = self.cuc.put(url, json=body)
+            resp = self.cuc.put(url, json=body, timeout=self.timeout)
 
             if resp.status_code != 204:
                 return 'Something went wrong: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
@@ -461,7 +466,7 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}'.format(self.url_base, user_oid)
-        resp = self.cuc.delete(url)
+        resp = self.cuc.delete(url, timeout=self.timeout)
 
         if resp.status_code == 204:
             return 'User deleted'
@@ -477,7 +482,7 @@ class CUPI(object):
         """
 
         url = '{0}/callhandlertemplates'.format(self.url_base)
-        return self.cuc.get(url).json()['CallhandlerTemplate']['ObjectId']
+        return self.cuc.get(url, timeout=self.timeout).json()['CallhandlerTemplate']['ObjectId']
 
     def get_call_handlers(self, mini=True):
         """
@@ -486,7 +491,7 @@ class CUPI(object):
         :return:
         """
         url = '{0}/handlers/callhandlers'.format(self.url_base)
-        resp = self.cuc.get(url).json()
+        resp = self.cuc.get(url, timeout=self.timeout).json()
 
         if mini:
             return [(i['DisplayName'], i['ObjectId']) for i in resp['Callhandler']]
@@ -500,7 +505,7 @@ class CUPI(object):
         :return:
         """
         url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, call_handler_oid)
-        return self.cuc.get(url).json()
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def get_call_handler_greeting(self, call_handler_oid, greeting='Standard'):
         """
@@ -510,7 +515,7 @@ class CUPI(object):
         :return:
         """
         url = '{0}/handlers/callhandlers/{1}/greetings/{2}'.format(self.url_base, call_handler_oid, greeting)
-        return self.cuc.get(url).json()
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def get_call_handler_greetings(self, call_handler_oid):
         """
@@ -519,13 +524,13 @@ class CUPI(object):
         :return:
         """
         url = '{0}/handlers/callhandlers/{1}/greetings'.format(self.url_base, call_handler_oid)
-        return self.cuc.get(url).json()
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def get_call_handler_greeting_recording(self, call_handler_oid, greeting, language='ENU'):
         url = '{0}/handlers/callhandlers/{1}/greetings/{2}/greetingstreamfiles/{3}/audio'.format(
                 self.url_base, call_handler_oid, greeting, language
         )
-        return self.cuc.get(url)
+        return self.cuc.get(url, timeout=self.timeout)
 
     def get_caller_input(self, call_handler_oid):
         """
@@ -535,8 +540,7 @@ class CUPI(object):
         """
 
         url = '{0}/handlers/callhandlers/{1}/menuentries'.format(self.url_base, call_handler_oid)
-        return self.cuc.get(url).json()
-
+        return self.cuc.get(url, timeout=self.timeout).json()
 
     def add_call_handler(self, display_name, dtmf_access_id, call_handler_template_oid, schedule_set_oid):
         """
@@ -554,7 +558,7 @@ class CUPI(object):
             'ScheduleSetObjectId': schedule_set_oid,
         }
 
-        resp = self.cuc.post(url, json=body)
+        resp = self.cuc.post(url, json=body, timeout=self.timeout)
         call_handler_oid = resp.text.split('/')[-1]
 
         if resp.status_code != 201:
@@ -580,7 +584,7 @@ class CUPI(object):
                 'PlayTransferPrompt': 'false'
             }
 
-        resp = self.cuc.put(url, json=body)
+        resp = self.cuc.put(url, json=body, timeout=self.timeout)
         if resp.status_code == 204:
             return 'Call handler transfer rule updated'
         else:
@@ -636,7 +640,7 @@ class CUPI(object):
                 'Reprompts': reprompts,
             }
 
-        resp = self.cuc.put(url, json=body)
+        resp = self.cuc.put(url, json=body, timeout=self.timeout)
         if resp.status_code == 204:
             return 'Call handler {0} greeting updated'.format(greeting)
         else:
@@ -671,7 +675,7 @@ class CUPI(object):
 
         # 1) Create a temp file
         url = '{0}/voicefiles'.format(self.url_base)
-        resp = self.cuc.post(url)
+        resp = self.cuc.post(url, timeout=self.timeout)
         temp_file = resp.text
 
         if resp.status_code == 201:
@@ -680,7 +684,7 @@ class CUPI(object):
 
             try:
                 with open('{0}/{1}'.format(file_location, greeting_file), 'rb') as payload:
-                    resp = self.cuc.put(url, data=payload)
+                    resp = self.cuc.put(url, data=payload, timeout=self.timeout)
             except FileNotFoundError:
                 return 'File: {0} Not Found'.format(greeting_file)
 
@@ -691,7 +695,7 @@ class CUPI(object):
                 )
                 body = {'StreamFile': temp_file}
 
-                resp = self.cuc.put(url, json=body)
+                resp = self.cuc.put(url, json=body, timeout=self.timeout)
 
                 # Return headers to normal
                 self.cuc.headers.update({
@@ -742,7 +746,7 @@ class CUPI(object):
                 'TargetHandlerObjectId': target_call_handler_oid,
             }
 
-        resp = self.cuc.put(url, json=body)
+        resp = self.cuc.put(url, json=body, timeout=self.timeout)
         if resp.status_code == 204:
             return 'Call handler caller input updated'
         else:
@@ -757,7 +761,7 @@ class CUPI(object):
         """
 
         url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, call_handler_oid)
-        resp = self.cuc.delete(url)
+        resp = self.cuc.delete(url, timeout=self.timeout)
 
         if resp.status_code == 204:
             return 'Call handler deleted'
