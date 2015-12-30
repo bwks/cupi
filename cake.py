@@ -22,7 +22,7 @@ class CUPI(object):
     >>> '89443b75-0547-4008-8245-39c3abeaed31'
     """
 
-    def __init__(self, cuc, username, password, verify=False):
+    def __init__(self, cuc, username, password, verify=False, timeout=1):
         """
         Sets up the connection to Cisco Unity Connection
 
@@ -30,17 +30,23 @@ class CUPI(object):
         :param username: User with privilege to access rest api
         :param password: Users password
         :param verify: Verify HTTPS connections
+        :param timeout: Timeout for request response
         """
 
         self.url_base = 'https://{0}/vmrest'.format(cuc)
         self.cuc = requests.session()
         self.cuc.auth = (username, password)
         self.cuc.verify = verify  # http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
+        self.timeout = timeout
         self.cuc.headers.update({
             'Accept': 'application/json',
             'Connection': 'keep_alive',
             'Content_type': 'application/json',
         })
+
+        # Test connection to CUC
+        url = '{0}/locations/connectionlocations'.format(self.url_base)
+        self.cuc.get(url, timeout=self.timeout)
 
     def get_languages(self):
         url = '{0}/languagemap'.format(self.url_base)
@@ -49,11 +55,12 @@ class CUPI(object):
     def get_owner_location_oid(self):
         """
         Get the owner location oid. This is needed for creating schedules
+        :param timeout:
         :return: owner location oid
         """
 
         url = '{0}/locations/connectionlocations'.format(self.url_base)
-        return self.cuc.get(url).json()['ConnectionLocation']['ObjectId']
+        return self.cuc.get(url, timeout=self.timeout).json()['ConnectionLocation']['ObjectId']
 
     def get_schedule_sets(self, mini=True):
         """
