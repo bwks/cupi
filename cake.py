@@ -666,9 +666,10 @@ class CUPI(object):
 
         # 1) Create a temp file
         url = '{0}/voicefiles'.format(self.url_base)
-        temp_file = self.cuc.post(url).text
+        resp = self.cuc.post(url)
+        temp_file = resp.text
 
-        if temp_file.status_code == 201:
+        if resp.status_code == 201:
             # 2) Upload recording to temp file location
             url = '{0}/voicefiles/{1}'.format(self.url_base, temp_file)
 
