@@ -56,3 +56,10 @@ class TestCUPI(unittest.TestCase):
         result = self.cuc.get_schedule('1234567890')
         self.assertEqual(result, 'Schedule not found')
 
+    def test_get_users_method_full_returns_200_ok_and_dict_key_exists(self):
+        result = self.cuc.get_users(mini=False)
+        self.assertEqual(result[0], 200) and 'User' in result[1]
+
+    def test_get_users_method_mini_returns_list(self):
+        result = self.cuc.get_users(mini=True)
+        self.assertTrue(isinstance(result, list))

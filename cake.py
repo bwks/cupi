@@ -306,12 +306,12 @@ class CUPI(object):
         """
 
         url = '{0}/users'.format(self.url_base)
-        resp = self.cuc.get(url, timeout=self.timeout).json()['User']
+        resp = self.cuc.get(url, timeout=self.timeout)
 
         if mini:
-            return [(i['DisplayName'], i['DtmfAccessId'], i['ObjectId'], i['TimeZone']) for i in resp]
+            return [(i['DisplayName'], i['DtmfAccessId'], i['ObjectId'], i['TimeZone']) for i in resp.json()['User']]
         else:
-            return resp
+            return resp.status_code, resp.json()['User']
 
     def get_user(self, user_oid):
         """
