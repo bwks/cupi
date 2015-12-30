@@ -175,7 +175,7 @@ class CUPI(object):
                 body = {
                     'ScheduleSetObjectId': schedule_set_oid,
                     'ScheduleObjectId': schedule_oid,
-                    'Exclude': 'false'
+                    'Exclude': 'false'  # Must be false for main schedule
                 }
 
                 resp = self.cuc.post(url, json=body)
@@ -406,9 +406,7 @@ class CUPI(object):
         :return:
         """
         url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, user_call_handler_oid)
-        body = {
-            'ScheduleSetObjectId': schedule_set_oid,
-        }
+        body = {'ScheduleSetObjectId': schedule_set_oid}
 
         resp = self.cuc.put(url, json=body)
 
