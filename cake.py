@@ -69,7 +69,8 @@ class CUPI(object):
         """
 
         url = '{0}/locations/connectionlocations'.format(self.url_base)
-        return self.cuc.get(url, timeout=self.timeout).json()['ConnectionLocation']['ObjectId']
+        resp = self.cuc.get(url, timeout=self.timeout)
+        return resp.status_code, resp.json()['ConnectionLocation']['ObjectId']
 
     def get_schedule_sets(self, mini=True):
         """
@@ -79,12 +80,12 @@ class CUPI(object):
         """
 
         url = '{0}/schedulesets'.format(self.url_base)
-        resp = self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
 
         if mini:
-            return [(i['DisplayName'], i['ObjectId']) for i in resp['ScheduleSet']]
+            return [(i['DisplayName'], i['ObjectId']) for i in resp.json()['ScheduleSet']]
         else:
-            return resp
+            return resp.status_code, resp.json()
 
     def get_schedules(self, mini=True):
         """
@@ -94,12 +95,12 @@ class CUPI(object):
         """
 
         url = '{0}/schedules'.format(self.url_base)
-        resp = self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
 
         if mini:
-            return [(i['DisplayName'], i['ObjectId']) for i in resp['Schedule']]
+            return [(i['DisplayName'], i['ObjectId']) for i in resp.json()['Schedule']]
         else:
-            return resp
+            return resp.status_code, resp.json()
 
     def get_schedule(self, schedule_oid):
         """
