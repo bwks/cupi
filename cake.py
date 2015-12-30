@@ -1,7 +1,7 @@
 """
 Class to interface with cisco unity connection cupi api.
 Author: Brad Searle
-Version: 0.4.3
+Version: 0.4.4
 Dependencies:
 - requests: http://docs.python-requests.org/en/latest/
 """
@@ -41,6 +41,10 @@ class CUPI(object):
             'Connection': 'keep_alive',
             'Content_type': 'application/json',
         })
+
+    def get_languages(self):
+        url = '{0}/languagemap'.format(self.url_base)
+        return self.cuc.get(url).json()
 
     def get_owner_location_oid(self):
         """
@@ -512,6 +516,23 @@ class CUPI(object):
         url = '{0}/handlers/callhandlers/{1}/greetings'.format(self.url_base, call_handler_oid)
         return self.cuc.get(url).json()
 
+    def get_call_handler_greeting_recording(self, call_handler_oid, greeting, language='ENU'):
+        url = '{0}/handlers/callhandlers/{1}/greetings/{2}/greetingstreamfiles/{3}/audio'.format(
+                self.url_base, call_handler_oid, greeting, language
+        )
+        return self.cuc.get(url)
+
+    def get_caller_input(self, call_handler_oid):
+        """
+
+        :param call_handler_oid:
+        :return:
+        """
+
+        url = '{0}/handlers/callhandlers/{1}/menuentries'.format(self.url_base, call_handler_oid)
+        return self.cuc.get(url).json()
+
+
     def add_call_handler(self, display_name, dtmf_access_id, call_handler_template_oid, schedule_set_oid):
         """
 
@@ -617,32 +638,76 @@ class CUPI(object):
             return 'Call handler {0} greeting not updated: {1} {2} {3}'.format(
                     greeting, resp.status_code, resp.reason, resp.text)
 
-    def delete_call_handler(self, call_handler_oid):
+    def update_call_handler_greeting_recording(self,
+                                               call_handler_oid,
+                                               greeting,
+                                               file_location,
+                                               greeting_file,
+                                               language='1033'):
         """
-
+        Updating call handler greeting recordings is a 3 part process
+        1) create a temp file
+        2) upload recording to temp file location
+        3) assign tempfile to greeting
         :param call_handler_oid:
+        :param greeting:
+        :param file_location:
+        :param greeting_file:
+        :param language: 1033 for english-us
         :return:
         """
 
-        url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, call_handler_oid)
-        resp = self.cuc.delete(url)
+        # update headers
+        self.cuc.headers.update({
+            'Accept': '*/*',
+            'Connection': 'keep_alive',
+            'Content_type': 'audio/wav',
+        })
 
-        if resp.status_code == 204:
-            return 'Call handler deleted'
-        elif resp.status_code == 404:
-            return 'Call handler not found'
+        # 1) Create a temp file
+        url = '{0}/voicefiles'.format(self.url_base)
+        temp_file = self.cuc.post(url).text
+
+        if temp_file.status_code == 201:
+            # 2) Upload recording to temp file location
+            url = '{0}/voicefiles/{1}'.format(self.url_base, temp_file)
+
+            try:
+                with open('{0}/{1}'.format(file_location, greeting_file), 'rb') as payload:
+                    resp = self.cuc.put(url, data=payload)
+            except FileNotFoundError:
+                return 'File: {0} Not Found'.format(greeting_file)
+
+            if resp.status_code == 204:
+                # 3) Assign temp file to greeting
+                url = '{0}/handlers/callhandlers/{1}/greetings/{2}/greetingstreamfiles/{3}'.format(
+                        self.url_base, call_handler_oid, greeting, language
+                )
+                body = {'StreamFile': temp_file}
+
+                resp = self.cuc.put(url, json=body)
+
+                # Return headers to normal
+                self.cuc.headers.update({
+                    'Accept': 'application/json',
+                    'Connection': 'keep_alive',
+                    'Content_type': 'application/json',
+                })
+                if resp.status_code == 204:
+                    return '{0} greeting successfully updated'.format(greeting)
+                else:
+                    return 'Could not update greeting: {0} {1} {2}'.format(
+                            resp.status_code, resp.reason, resp.text
+                    )
+
+            else:
+                return 'Could upload file: {0} {1} {2}'.format(
+                        resp.status_code, resp.reason, resp.text
+                )
         else:
-            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
-
-    def get_caller_input(self, call_handler_oid):
-        """
-
-        :param call_handler_oid:
-        :return:
-        """
-
-        url = '{0}/handlers/callhandlers/{1}/menuentries'.format(self.url_base, call_handler_oid)
-        return self.cuc.get(url).json()
+            return 'Could not create temp file: {0} {1} {2}'.format(
+                    temp_file.status_code, temp_file.reason, temp_file.text
+            )
 
     def update_caller_input(self,
                             call_handler_oid,
@@ -677,3 +742,20 @@ class CUPI(object):
         else:
             return 'Call handler caller input not updated: {1} {2} {3}'.format(
                     resp.status_code, resp.reason, resp.text)
+
+    def delete_call_handler(self, call_handler_oid):
+        """
+
+        :param call_handler_oid:
+        :return:
+        """
+
+        url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, call_handler_oid)
+        resp = self.cuc.delete(url)
+
+        if resp.status_code == 204:
+            return 'Call handler deleted'
+        elif resp.status_code == 404:
+            return 'Call handler not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
