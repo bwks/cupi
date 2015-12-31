@@ -22,7 +22,7 @@ class CUPI(object):
     >>> '89443b75-0547-4008-8245-39c3abeaed31'
     """
 
-    def __init__(self, cuc, username, password, verify=False, timeout=1):
+    def __init__(self, cuc, username, password, verify=False, timeout=2):
         """
         Sets up the connection to Cisco Unity Connection
 
@@ -322,6 +322,7 @@ class CUPI(object):
 
         url = '{0}/users/{1}'.format(self.url_base, user_oid)
         resp = self.cuc.get(url, timeout=self.timeout)
+
         if resp.status_code == 200:
             return resp.json()
         elif resp.status_code == 404:
@@ -337,7 +338,14 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}/credential/pin'.format(self.url_base, user_oid)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
+
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return 'User not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_user_password_settings(self, user_oid):
         """
@@ -347,7 +355,14 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}/credential/password'.format(self.url_base, user_oid)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
+
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return 'User not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_user_templates(self):
         """
@@ -508,12 +523,12 @@ class CUPI(object):
         :return:
         """
         url = '{0}/handlers/callhandlers'.format(self.url_base)
-        resp = self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
 
         if mini:
-            return [(i['DisplayName'], i['ObjectId']) for i in resp['Callhandler']]
+            return [(i['DisplayName'], i['ObjectId']) for i in resp.json()['Callhandler']]
         else:
-            return resp
+            return resp.status_code, resp.json()
 
     def get_call_handler(self, call_handler_oid):
         """

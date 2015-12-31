@@ -16,11 +16,11 @@ class TestCUPI(unittest.TestCase):
     def setUp(self):
         self.cuc = CUPI('192.168.200.11', 'admin', 'asdfpoiu')
 
-    def test_connection_to_cuc_server_timeout_with_incorrect_ip_fail(self):
+    def test_connection_to_cuc_server_timeout_with_incorrect_ip(self):
         c = CUPI('192.168.200.111', 'admin', 'asdfpoiu')
         self.assertRaises(ConnectTimeout, c.online_test)
 
-    def test_connection_to_cuc_server_timeout_with_correct_ip(self):
+    def test_connection_to_cuc_server_with_correct_ip(self):
         self.assertEqual(self.cuc.online_test(), 200)
 
     def test_get_languages_method_returns_200_ok_and_dict_key_exists(self):
@@ -77,3 +77,38 @@ class TestCUPI(unittest.TestCase):
     def test_get_user_method_with_unknown_oid_returns_404(self):
         result = self.cuc.get_user('1234567890')
         self.assertEqual(result, 'User not found')
+
+    def test_get_user_pin_settings_method_returns_user_oid(self):
+        user_oid = self.cuc.get_users(mini=True)[0][2]
+        result = self.cuc.get_user_pin_settings(user_oid)['UserObjectId']
+        self.assertEqual(result, user_oid)
+
+    def test_get_user_pin_settings_method_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_user_pin_settings('1234567890')
+        self.assertEqual(result, 'User not found')
+
+    def test_get_user_password_settings_method_returns_user_oid(self):
+        user_oid = self.cuc.get_users(mini=True)[0][2]
+        result = self.cuc.get_user_password_settings(user_oid)['UserObjectId']
+        self.assertEqual(result, user_oid)
+
+    def test_get_user_password_settings_method_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_user_password_settings('1234567890')
+        self.assertEqual(result, 'User not found')
+
+    def test_get_user_templates_method_returns_list(self):
+        result = self.cuc.get_user_templates()
+        self.assertTrue(isinstance(result, list))
+
+    def test_get_call_handler_template_oid_returns_non_empty_string(self):
+        result = self.cuc.get_call_handler_template_oid()
+        self.assertIsNot(result, '')
+
+    def test_get_call_handlers_method_full_returns_200_ok_and_dict_key_exists(self):
+        result = self.cuc.get_call_handlers(mini=False)
+        self.assertEqual(result[0], 200) and 'Schedule' in result[1]
+
+    def test_get_call_handlers_method_mini_returns_list(self):
+        result = self.cuc.get_call_handlers(mini=True)
+        self.assertTrue(isinstance(result, list))
+
