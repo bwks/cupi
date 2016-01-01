@@ -22,14 +22,15 @@ class CUPI(object):
     >>> '89443b75-0547-4008-8245-39c3abeaed31'
     """
 
-    def __init__(self, cuc, username, password, verify=False, timeout=2):
+    def __init__(self, cuc, username, password, verify=False, disable_warnings=False, timeout=2):
         """
         Sets up the connection to Cisco Unity Connection
 
         :param cuc: Unity connection IP Address
         :param username: User with privilege to access rest api
         :param password: Users password
-        :param verify: Verify HTTPS connections
+        :param verify: Verify SSL certificate
+        :param disable_warnings: Disable console warnings
         :param timeout: Timeout for request response
         """
 
@@ -37,12 +38,16 @@ class CUPI(object):
         self.cuc = requests.session()
         self.cuc.auth = (username, password)
         self.cuc.verify = verify  # http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
+        self.disable_warnings = disable_warnings
         self.timeout = timeout
         self.cuc.headers.update({
             'Accept': 'application/json',
             'Connection': 'keep_alive',
             'Content_type': 'application/json',
         })
+
+        if disable_warnings:
+            requests.packages.urllib3.disable_warnings()
 
     def online_test(self):
         """
@@ -537,17 +542,14 @@ class CUPI(object):
         :return:
         """
         url = '{0}/handlers/callhandlers/{1}'.format(self.url_base, call_handler_oid)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
 
-    def get_call_handler_greeting(self, call_handler_oid, greeting='Standard'):
-        """
-
-        :param call_handler_oid:
-        :param greeting:
-        :return:
-        """
-        url = '{0}/handlers/callhandlers/{1}/greetings/{2}'.format(self.url_base, call_handler_oid, greeting)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return 'Call handler not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_call_handler_greetings(self, call_handler_oid):
         """
@@ -556,13 +558,38 @@ class CUPI(object):
         :return:
         """
         url = '{0}/handlers/callhandlers/{1}/greetings'.format(self.url_base, call_handler_oid)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
 
-    def get_call_handler_greeting_recording(self, call_handler_oid, greeting, language='ENU'):
-        url = '{0}/handlers/callhandlers/{1}/greetings/{2}/greetingstreamfiles/{3}/audio'.format(
-                self.url_base, call_handler_oid, greeting, language
-        )
-        return self.cuc.get(url, timeout=self.timeout)
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return 'Call handler not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+
+    def get_call_handler_greeting(self, call_handler_oid, greeting='Standard'):
+        """
+
+        :param call_handler_oid:
+        :param greeting:
+        :return:
+        """
+        greetings = ['Alternate', 'Busy', 'Error', 'Internal', 'Off Hours', 'Standard', 'Holiday']
+        if greeting not in greetings:
+            return 'Invalid greeting: {0}'.format(greeting)
+
+        if greeting == 'Off Hours':
+            greeting = 'Off%20Hours'
+
+        url = '{0}/handlers/callhandlers/{1}/greetings/{2}'.format(self.url_base, call_handler_oid, greeting)
+        resp = self.cuc.get(url, timeout=self.timeout)
+
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return 'Call handler not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_caller_input(self, call_handler_oid):
         """

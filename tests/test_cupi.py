@@ -8,13 +8,11 @@ import requests
 from requests.exceptions import ConnectTimeout
 from cupi.cake import CUPI
 
-requests.packages.urllib3.disable_warnings()
-
 
 class TestCUPI(unittest.TestCase):
 
     def setUp(self):
-        self.cuc = CUPI('192.168.200.11', 'admin', 'asdfpoiu')
+        self.cuc = CUPI('192.168.200.11', 'admin', 'asdfpoiu', disable_warnings=True)
 
     def test_connection_to_cuc_server_timeout_with_incorrect_ip(self):
         c = CUPI('192.168.200.111', 'admin', 'asdfpoiu')
@@ -111,4 +109,42 @@ class TestCUPI(unittest.TestCase):
     def test_get_call_handlers_method_mini_returns_list(self):
         result = self.cuc.get_call_handlers(mini=True)
         self.assertTrue(isinstance(result, list))
+
+    def test_get_call_handler_method_returns_call_handler_oid(self):
+        call_handler_oid = self.cuc.get_call_handlers(mini=True)[0][1]
+        result = self.cuc.get_call_handler(call_handler_oid)['ObjectId']
+        self.assertEqual(result, call_handler_oid)
+
+    def test_get_call_handler_method_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_call_handler('1234567890')
+        self.assertEqual(result, 'Call handler not found')
+
+    def test_get_call_handler_greeting_method_returns_invalid_greeting_for_unknown_greeting_type(self):
+        call_handler_oid = self.cuc.get_call_handlers(mini=True)[0][1]
+        greeting = 'blah'
+        result = self.cuc.get_call_handler_greeting(call_handler_oid, greeting=greeting)
+        self.assertEqual(result, 'Invalid greeting: {0}'.format(greeting))
+
+    def test_get_call_handler_greetings_method_returns_list(self):
+        call_handler_oid = self.cuc.get_call_handlers(mini=True)[0][1]
+        result = self.cuc.get_call_handler_greetings(call_handler_oid)['Greeting']
+        self.assertTrue(isinstance(result, list))
+
+    def test_get_call_handler_greetings_method_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_call_handler('1234567890')
+        self.assertEqual(result, 'Call handler not found')
+
+    def test_get_call_handler_greeting_method_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_call_handler_greeting('1234567890')
+        self.assertEqual(result, 'Call handler not found')
+
+    def test_get_call_handler_greeting_method_returns_call_handler_oid(self):
+        call_handler_oid = self.cuc.get_call_handlers(mini=True)[0][1]
+        result = self.cuc.get_call_handler_greeting(call_handler_oid, greeting='Standard')['CallHandlerObjectId']
+        self.assertEqual(result, call_handler_oid)
+
+    def test_get_call_handler_greeting_method_with_off_hours_returns_off_hours_greeting(self):
+        call_handler_oid = self.cuc.get_call_handlers(mini=True)[0][1]
+        result = self.cuc.get_call_handler_greeting(call_handler_oid, greeting='Off Hours')['GreetingType']
+        self.assertEqual(result, 'Off Hours')
 
