@@ -28,7 +28,7 @@ class CUPI(object):
         :param username: User with privilege to access rest api
         :param password: Users password
         :param verify: Verify SSL certificate
-        :param disable_warnings: Disable console warnings
+        :param disable_warnings: Disable console warnings if ssl cert invalid
         :param timeout: Timeout for request response
         """
 
@@ -49,9 +49,9 @@ class CUPI(object):
 
     def get_server_info(self, online_test=False):
         """
-
+        Get information relating to the server configuration
         :param online_test: return 200 if API online
-        :return:
+        :return: dictionary of values or 200
         """
         url = '{0}/cluster'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
@@ -62,9 +62,9 @@ class CUPI(object):
 
     def get_license_info(self, mini=True):
         """
-
-        :param mini:
-        :return:
+        Get the CUC server licensing information
+        :param mini: Returns a list of tuples containing licensing information
+        :return: A list or dictionary of licensing information
         """
         url = '{0}/licensestatuscounts'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
@@ -78,7 +78,7 @@ class CUPI(object):
     def get_languages(self):
         """
         Get a dictionary of languages
-        :return: tuple of status code & dictionary of languages
+        :return: Dictionary of languages
         """
         url = '{0}/languagemap'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
@@ -87,9 +87,8 @@ class CUPI(object):
     def get_owner_location_oid(self):
         """
         Get the owner location oid. This is needed for creating schedules
-        :return: owner location oid
+        :return: owner location oid as a string
         """
-
         url = '{0}/locations/connectionlocations'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
         return resp.json()['ConnectionLocation']['ObjectId']
@@ -100,7 +99,6 @@ class CUPI(object):
         :param mini: return minimal list if True else return full json response
         :return: a list of tuples of schedule sets
         """
-
         url = '{0}/schedulesets'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
 
@@ -113,9 +111,8 @@ class CUPI(object):
         """
         Get Schedules
         :param mini: return minimal list if True else return full json response
-        :return: a list of tuples of schedules
+        :return: a list of tuples of schedules or a dictionary of schedules
         """
-
         url = '{0}/schedules'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
 
@@ -126,9 +123,9 @@ class CUPI(object):
 
     def get_schedule(self, schedule_oid):
         """
-        Get Schedule details
-        :param schedule_oid: return minimal list if True else return full json response
-        :return: a dictionary of parameters
+        Get a single schedule
+        :param schedule_oid: the oid of the schedule to get info for
+        :return: a dictionary of schedule info
         """
 
         url = '{0}/schedules/{1}'.format(self.url_base, schedule_oid)
@@ -179,11 +176,6 @@ class CUPI(object):
         :param is_active_saturday: Schedule active Saturday true/false
         :param is_active_sunday: Schedule active Sunday true/false
         :return: Result of adding the schedule, & schedule_set_oid, schedule_oid if successful
-
-        example usage:
-                                    display_name                         owner_location_oid
-        >>> c.add_schedule('Test Schedule M-F 8.30am - 5.00pm', '89443b75-0547-4008-8245-39c3abeaed31')
-        >>> 'Schedule Successfully Added'
         """
 
         # 1) Add a schedule set
@@ -220,7 +212,7 @@ class CUPI(object):
                 body = {
                     'ScheduleSetObjectId': schedule_set_oid,
                     'ScheduleObjectId': schedule_oid,
-                    'Exclude': 'false'  # Must be false for main schedule
+                    'Exclude': 'false'  # Must be false for non-holiday schedule
                 }
 
                 resp = self.cuc.post(url, json=body, timeout=self.timeout)
@@ -259,7 +251,7 @@ class CUPI(object):
         Update a schedules holiday schedule
         :param schedule_set_oid: Schedule set OID
         :param holiday_oid: OID of the holiday schedule to assign
-        :return:
+        :return: Result as a string
         """
         url = '{0}/schedulesets/{1}/schedulesetmembers'.format(self.url_base, schedule_set_oid)
         body = {
@@ -278,9 +270,9 @@ class CUPI(object):
 
     def delete_schedule_set(self, schedule_set_oid):
         """
-
-        :param schedule_set_oid:
-        :return:
+        Delete a schedule set
+        :param schedule_set_oid: OID of the schedule set to delete
+        :return: Result as a string
         """
 
         url = '{0}/schedulesets/{1}'.format(self.url_base, schedule_set_oid)
@@ -295,9 +287,9 @@ class CUPI(object):
 
     def delete_schedule(self, schedule_oid):
         """
-
-        :param schedule_oid:
-        :return:
+        Delete a schedule
+        :param schedule_oid: OID of the schedule to delete
+        :return: Result as a string
         """
 
         url = '{0}/schedules/{1}'.format(self.url_base, schedule_oid)
