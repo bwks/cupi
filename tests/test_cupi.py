@@ -160,6 +160,39 @@ class TestCUPI(unittest.TestCase):
         result = self.cuc.get_caller_input('1234567890')
         self.assertEqual(result, 'Call handler not found')
 
-    #def test_add_schedule_is_successful(self):
+    def test_delete_schedule_set_with_invalid_oid_returns_404(self):
+        result = self.cuc.delete_schedule_set('1234567890')
+        self.assertEqual(result, 'Schedule set not found')
 
-        #result = self.cuc.add
+    def test_delete_schedule_with_invalid_oid_returns_404(self):
+        result = self.cuc.delete_schedule('1234567890')
+        self.assertEqual(result, 'Schedule not found')
+
+    def test_add_schedule_is_successful_and_delete_successful(self):
+        owner_location_oid = self.cuc.get_owner_location_oid()
+        result = self.cuc.add_schedule('Test Case Schedule', owner_location_oid)
+
+        #clean up
+        s_del = self.cuc.delete_schedule(result[2])
+        ss_del = self.cuc.delete_schedule_set(result[1])
+
+        self.assertEqual(result[0], 'Schedule successfully added') and \
+        self.assertEqual(ss_del, 'Schedule set deleted') and \
+        self.assertEqual(s_del, 'Schedule deleted')
+
+    def test_update_schedule_is_successful(self):
+        owner_location_oid = self.cuc.get_owner_location_oid()
+        schedule = self.cuc.add_schedule('Test Case Schedule', owner_location_oid)
+
+        # get holiday schedule oid
+        for i in self.cuc.get_schedules():
+            if i[0] == 'Holidays':
+                holiday_schedule_oid = i[1]
+
+        result = self.cuc.update_schedule_holiday(schedule[1], holiday_schedule_oid)
+
+        #clean up
+        self.cuc.delete_schedule(schedule[2])
+        self.cuc.delete_schedule_set(schedule[1])
+
+        self.assertEqual(result, 'Schedules holiday schedule successfully updated')
