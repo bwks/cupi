@@ -5,7 +5,7 @@
 `from cupi.cake import CUPI`
 
 #### Instantiate connection to Cisco Unity Connection server
-`c = CUPI('192.168.200.11', 'username', 'password', diable_warnings=True)``
+`c = CUPI('192.168.200.11', 'username', 'password', diable_warnings=True)`
 
 #### Call methods to return information or configure unity
 ```
@@ -20,7 +20,7 @@ c.get_server_info()
 
 ### Configure a Schedule
 #### Get the owner location oid
-`owner_location_oid = c.get_owner_location_oid()``
+`owner_location_oid = c.get_owner_location_oid()`
 
 #### Add the schedule, default schedule is 8.30am - 5.00pm M-F
 ```
