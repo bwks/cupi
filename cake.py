@@ -63,7 +63,7 @@ class CUPI(object):
         """
         url = '{0}/languagemap'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
-        return resp.status_code, resp.json()
+        return resp.json()
 
     def get_owner_location_oid(self):
         """
@@ -73,7 +73,7 @@ class CUPI(object):
 
         url = '{0}/locations/connectionlocations'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
-        return resp.status_code, resp.json()['ConnectionLocation']['ObjectId']
+        return resp.json()['ConnectionLocation']['ObjectId']
 
     def get_schedule_sets(self, mini=True):
         """
@@ -88,7 +88,7 @@ class CUPI(object):
         if mini:
             return [(i['DisplayName'], i['ObjectId']) for i in resp.json()['ScheduleSet']]
         else:
-            return resp.status_code, resp.json()
+            return resp.json()
 
     def get_schedules(self, mini=True):
         """
@@ -103,7 +103,7 @@ class CUPI(object):
         if mini:
             return [(i['DisplayName'], i['ObjectId']) for i in resp.json()['Schedule']]
         else:
-            return resp.status_code, resp.json()
+            return resp.json()
 
     def get_schedule(self, schedule_oid):
         """
@@ -282,8 +282,8 @@ class CUPI(object):
         """
 
         url = '{0}/schedules/{1}'.format(self.url_base, schedule_oid)
-
         resp = self.cuc.delete(url, timeout=self.timeout)
+
         if resp.status_code == 204:
             return 'Schedule deleted'
         elif resp.status_code == 404:
@@ -299,7 +299,14 @@ class CUPI(object):
         """
 
         url = '{0}/users/{1}'.format(self.url_base, user_oid)
-        return self.cuc.get(url, timeout=self.timeout).json()['CallHandlerObjectId']
+        resp = self.cuc.get(url, timeout=self.timeout)
+
+        if resp.status_code == 200:
+            return resp.json()['CallHandlerObjectId']
+        elif resp.status_code == 404:
+            return 'User not found'
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def get_users(self, mini=True):
         """
@@ -314,7 +321,7 @@ class CUPI(object):
         if mini:
             return [(i['DisplayName'], i['DtmfAccessId'], i['ObjectId'], i['TimeZone']) for i in resp.json()['User']]
         else:
-            return resp.status_code, resp.json()['User']
+            return resp.json()
 
     def get_user(self, user_oid):
         """
@@ -531,7 +538,7 @@ class CUPI(object):
         if mini:
             return [(i['DisplayName'], i['ObjectId']) for i in resp.json()['Callhandler']]
         else:
-            return resp.status_code, resp.json()
+            return resp.json()
 
     def get_call_handler(self, call_handler_oid):
         """
