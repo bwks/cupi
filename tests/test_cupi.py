@@ -15,10 +15,18 @@ class TestCUPI(unittest.TestCase):
 
     def test_connection_to_cuc_server_timeout_with_incorrect_ip(self):
         c = CUPI('192.168.200.111', 'admin', 'asdfpoiu')
-        self.assertRaises(ConnectTimeout, c.online_test)
+        self.assertRaises(ConnectTimeout, c.get_server_info, online_test=True)
 
     def test_connection_to_cuc_server_with_correct_ip(self):
-        self.assertEqual(self.cuc.online_test(), 200)
+        self.assertEqual(self.cuc.get_server_info(online_test=True), 200)
+
+    def test_get_license_info_full_returns_dict_and_key_exists(self):
+        result = self.cuc.get_license_info(mini=False)
+        self.assertTrue(isinstance(result, dict)) and 'LicenseStatusCount' in result
+
+    def test_get_license_info_mini_returns_list(self):
+        result = self.cuc.get_license_info(mini=True)
+        self.assertTrue(isinstance(result, list))
 
     def test_get_languages_returns_dict_and_key_exists(self):
         result = self.cuc.get_languages()
@@ -168,11 +176,11 @@ class TestCUPI(unittest.TestCase):
         result = self.cuc.delete_schedule('1234567890')
         self.assertEqual(result, 'Schedule not found')
 
-    def test_add_schedule_is_successful_and_delete_successful(self):
+    def test_add_schedule_is_successful_and_delete_schedule_successful(self):
         owner_location_oid = self.cuc.get_owner_location_oid()
         result = self.cuc.add_schedule('Test Case Schedule', owner_location_oid)
 
-        #clean up
+        # clean up
         s_del = self.cuc.delete_schedule(result[2])
         ss_del = self.cuc.delete_schedule_set(result[1])
 
@@ -196,3 +204,13 @@ class TestCUPI(unittest.TestCase):
         self.cuc.delete_schedule_set(schedule[1])
 
         self.assertEqual(result, 'Schedules holiday schedule successfully updated')
+
+    def test_add_user_is_successful_and_delete_user_successful(self):
+        result = self.cuc.add_user('Test Case User', '77777', 'First Name', 'Last Name', 'Test User Template', '255')
+
+        # clean up
+        u_del = self.cuc.delete_user(result[1])
+
+        self.assertEqual(result[0], 'User successfully added') and \
+        self.assertEqual(u_del, 'User deleted')
+
