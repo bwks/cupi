@@ -214,6 +214,10 @@ class TestCUPI(unittest.TestCase):
         self.assertEqual(result[0], 'User successfully added') and \
         self.assertEqual(u_del, 'User deleted')
 
+    def test_delete_user_with_unknown_oid_returns_404(self):
+        result = self.cuc.delete_user('1234567890')
+        self.assertEqual(result, 'User not found')
+
     def test_add_call_handler_is_successful_and_delete_call_handler_is_successful(self):
         call_handler_template_oid = self.cuc.get_call_handler_template_oid()
         owner_location_oid = self.cuc.get_owner_location_oid()
@@ -231,7 +235,10 @@ class TestCUPI(unittest.TestCase):
         self.assertEqual(s_del, 'Schedule deleted') and \
         self.assertEqual(ch_del, 'Call handler deleted')
 
-
     def test_get_caller_handler_with_unknown_oid_returns_404(self):
         result = self.cuc.get_caller_input('1234567890')
+        self.assertEqual(result, 'Call handler not found')
+
+    def test_delete_caller_handler_with_unknown_oid_returns_404(self):
+        result = self.cuc.delete_call_handler('1234567890')
         self.assertEqual(result, 'Call handler not found')
