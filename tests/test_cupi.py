@@ -11,7 +11,7 @@ from cupi.cake import CUPI
 class TestCUPI(unittest.TestCase):
 
     def setUp(self):
-        self.cuc = CUPI('192.168.200.11', 'admin', 'asdfpoiu', disable_warnings=True)
+        self.cuc = CUPI('192.168.200.11', 'admin', 'asdfpoiu', timeout=3, disable_warnings=True)
 
     def test_connection_to_cuc_server_timeout_with_incorrect_ip(self):
         c = CUPI('192.168.200.111', 'admin', 'asdfpoiu')
@@ -178,7 +178,7 @@ class TestCUPI(unittest.TestCase):
 
     def test_add_schedule_is_successful_and_delete_schedule_successful(self):
         owner_location_oid = self.cuc.get_owner_location_oid()
-        result = self.cuc.add_schedule('Test Case Schedule', owner_location_oid)
+        result = self.cuc.add_schedule('Test case schedule', owner_location_oid)
 
         # clean up
         s_del = self.cuc.delete_schedule(result[2])
@@ -205,12 +205,27 @@ class TestCUPI(unittest.TestCase):
 
         self.assertEqual(result, 'Schedules holiday schedule successfully updated')
 
-    def test_add_user_is_successful_and_delete_user_successful(self):
-        result = self.cuc.add_user('Test Case User', '77777', 'First Name', 'Last Name', 'Test User Template', '255')
+    def test_add_user_is_successful_and_delete_user_is_successful(self):
+        result = self.cuc.add_user('Test case user', '77777', 'First Name', 'Last Name', 'Test User Template', '255')
 
         # clean up
         u_del = self.cuc.delete_user(result[1])
 
         self.assertEqual(result[0], 'User successfully added') and \
         self.assertEqual(u_del, 'User deleted')
+
+    def test_add_call_handler_is_successful_and_delete_call_handler_is_successful(self):
+        call_handler_template_oid = self.cuc.get_call_handler_template_oid()
+        owner_location_oid = self.cuc.get_owner_location_oid()
+        schedule = self.cuc.add_schedule('Test case call handler schedule', owner_location_oid)
+
+        result = self.cuc.add_call_handler('Test case call handler', '88888', call_handler_template_oid, schedule[1])
+
+        # clean up
+        s_del = self.cuc.delete_schedule(schedule[2])
+        ss_del = self.cuc.delete_schedule_set(schedule[1])
+
+        self.assertEqual(result[0], 'Call handler added successfully') and \
+        self.assertEqual(ss_del, 'Schedule set deleted') and \
+        self.assertEqual(s_del, 'Schedule deleted')
 
