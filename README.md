@@ -22,14 +22,17 @@ Out[3]:
 In [4]: owner_location_oid = c.get_owner_location_oid()
 
 # Add the schedule, default schedule is 8.30am - 5.00pm M-F
-In [5]: result = c.add_schedule('Test Schedule 8.30am - 5.00pm M-F', owner_location_oid)
-In [6]: result
-Out[6]: ('Schedule successfully added',
+```
+result = c.add_schedule('Test Schedule 8.30am - 5.00pm M-F', owner_location_oid)
+result
+('Schedule successfully added',
           '96ce912c-21b8-4589-9b07-b0ad45264865',
           'fb2982b3-ff89-43b7-b541-3a21445a3d50')
+```
 
-In [7]: c.get_schedules()
-Out[7]:
+# Get Schedules
+```
+c.get_schedules()
 [('Holidays', '31c02cd2-7619-42f7-a1e6-dd1661b6bc20'),
  ('Weekdays', 'e6936d89-8d65-4abc-9df5-d88325910cb0'),
  ('All Hours', '75411de4-f83e-4f85-91fe-9949f443b806'),
@@ -37,4 +40,4 @@ Out[7]:
  ('Sync Schedule', '3a5a208e-3895-4da3-bbfc-659c860bec3e'),
  ('Test Schedule 8.30am - 5.00pm M-F', 'fb2982b3-ff89-43b7-b541-3a21445a3d50'),
  ('Sync Schedule', 'd0bc824f-dd73-4f2a-9275-b79ade02ab67')]
-
+```
