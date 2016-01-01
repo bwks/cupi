@@ -222,10 +222,16 @@ class TestCUPI(unittest.TestCase):
         result = self.cuc.add_call_handler('Test case call handler', '88888', call_handler_template_oid, schedule[1])
 
         # clean up
+        ch_del = self.cuc.delete_call_handler(result[1])
         s_del = self.cuc.delete_schedule(schedule[2])
         ss_del = self.cuc.delete_schedule_set(schedule[1])
 
         self.assertEqual(result[0], 'Call handler added successfully') and \
         self.assertEqual(ss_del, 'Schedule set deleted') and \
-        self.assertEqual(s_del, 'Schedule deleted')
+        self.assertEqual(s_del, 'Schedule deleted') and \
+        self.assertEqual(ch_del, 'Call handler deleted')
 
+
+    def test_get_caller_handler_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_caller_input('1234567890')
+        self.assertEqual(result, 'Call handler not found')
