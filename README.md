@@ -1,27 +1,28 @@
-# CUPI is a Python module to manage Cisco Unity Connection via the CUPI REST API
+### CUPI is a Python module to manage Cisco Unity Connection via the CUPI REST API
 
-Example Usage:
-# Import CUPI
-In [1]: from cupi.cake import CUPI
+###Example Usage:
+#### Import CUPI
+`from cupi.cake import CUPI`
 
-# Instantiate connection to Cisco Unity Connection server
-In [2]: c = CUPI('192.168.200.11', 'username', 'password', diable_warnings=True)
+#### Instantiate connection to Cisco Unity Connection server
+`c = CUPI('192.168.200.11', 'username', 'password', diable_warnings=True)``
 
-# Call methods to return information or configure unity
-In [3]: c.get_server_info()
-Out[3]:
+#### Call methods to return information or configure unity
+```
+c.get_server_info()
 {'DatabaseReplication': '0',
  'MacAddress': '',
  'Ipv6Name': '',
  'HostName': 'lab-cuc01',
  'Key': '12d8f9cf-67ce-4bd5-85b6-2f8af4e87f4e',
  'Description': ''}
+```
 
-# Configure a Schedule
-# Get the owner location oid
-In [4]: owner_location_oid = c.get_owner_location_oid()
+### Configure a Schedule
+#### Get the owner location oid
+`owner_location_oid = c.get_owner_location_oid()``
 
-# Add the schedule, default schedule is 8.30am - 5.00pm M-F
+#### Add the schedule, default schedule is 8.30am - 5.00pm M-F
 ```
 result = c.add_schedule('Test Schedule 8.30am - 5.00pm M-F', owner_location_oid)
 result
@@ -30,7 +31,7 @@ result
           'fb2982b3-ff89-43b7-b541-3a21445a3d50')
 ```
 
-# Get Schedules
+#### Get Schedules
 ```
 c.get_schedules()
 [('Holidays', '31c02cd2-7619-42f7-a1e6-dd1661b6bc20'),
