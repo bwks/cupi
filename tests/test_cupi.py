@@ -3,7 +3,6 @@ Unity Connection server will be required for these tests
 Tests are performed against CUC 10.5.2
 """
 import unittest
-import requests
 
 from requests.exceptions import ConnectTimeout
 from cupi.cake import CUPI
@@ -148,3 +147,11 @@ class TestCUPI(unittest.TestCase):
         result = self.cuc.get_call_handler_greeting(call_handler_oid, greeting='Off Hours')['GreetingType']
         self.assertEqual(result, 'Off Hours')
 
+    def test_get_caller_input_method_returns_list(self):
+        call_handler_oid = self.cuc.get_call_handlers(mini=True)[0][1]
+        result = self.cuc.get_caller_input(call_handler_oid)
+        self.assertTrue(isinstance(result, list))
+
+    def test_get_caller_input_method_with_unknown_oid_returns_404(self):
+        result = self.cuc.get_caller_input('1234567890')
+        self.assertEqual(result, 'Call handler not found')

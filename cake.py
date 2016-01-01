@@ -6,8 +6,6 @@ Dependencies:
 - requests: http://docs.python-requests.org/en/latest/
 """
 
-import json
-
 import requests
 
 
@@ -46,7 +44,7 @@ class CUPI(object):
             'Content_type': 'application/json',
         })
 
-        if disable_warnings:
+        if self.disable_warnings:
             requests.packages.urllib3.disable_warnings()
 
     def online_test(self):
@@ -599,7 +597,14 @@ class CUPI(object):
         """
 
         url = '{0}/handlers/callhandlers/{1}/menuentries'.format(self.url_base, call_handler_oid)
-        return self.cuc.get(url, timeout=self.timeout).json()
+        resp = self.cuc.get(url, timeout=self.timeout)
+
+        if resp.json()['@total'] == '0':
+            return 'Call handler not found'
+        elif resp.status_code == 200:
+            return resp.json()['MenuEntry']
+        else:
+            return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
 
     def add_call_handler(self, display_name, dtmf_access_id, call_handler_template_oid, schedule_set_oid):
         """
