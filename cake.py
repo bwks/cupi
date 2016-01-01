@@ -47,14 +47,33 @@ class CUPI(object):
         if self.disable_warnings:
             requests.packages.urllib3.disable_warnings()
 
-    def online_test(self):
+    def get_server_info(self, online_test=False):
         """
-        Test if CUC API is available
-        :return: status code 200
+
+        :param online_test: return 200 if API online
+        :return:
         """
         url = '{0}/cluster'.format(self.url_base)
         resp = self.cuc.get(url, timeout=self.timeout)
-        return resp.status_code
+        if online_test:
+            return resp.status_code
+        else:
+            return resp.json()['Server']
+
+    def get_license_info(self, mini=True):
+        """
+
+        :param mini:
+        :return:
+        """
+        url = '{0}/licensestatuscounts'.format(self.url_base)
+        resp = self.cuc.get(url, timeout=self.timeout)
+
+        if mini:
+            return [(i['featureName'], i['TagName'], i['description'], i['Count'])
+                    for i in resp.json()['LicenseStatusCount']]
+        else:
+            return resp.json()
 
     def get_languages(self):
         """
@@ -840,3 +859,4 @@ class CUPI(object):
             return 'Call handler not found'
         else:
             return 'Unknown result: {0} {1} {2}'.format(resp.status_code, resp.reason, resp.text)
+
