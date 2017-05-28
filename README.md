@@ -13,16 +13,15 @@ Resolving deltas: 100% (95/95), done.
 Checking connectivity... done.
 ```
 
-### Example Usage
-Update your path
+### Example Usage:
 ```python
+# Update your path
 import sys
 sys.path.append('/path/to/repo')
-```
 
-### Example Usage:
-#### Import CUPI
-`from cupi.cake import CUPI`
+# Import CUPI
+from cupi.cake import CUPI
+```
 
 #### Instantiate connection to Cisco Unity Connection server
 `c = CUPI('192.168.200.11', 'username', 'password', diable_warnings=True)`
