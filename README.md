@@ -1,6 +1,26 @@
 ### CUPI is a Python module to manage Cisco Unity Connection via the CUPI REST API
 
-###Example Usage:
+### Installation
+Clone repository
+```bash
+git clone https://github.com/bobthebutcher/cupi.git
+Cloning into 'cupi'...
+remote: Counting objects: 169, done.
+remote: Compressing objects: 100% (72/72), done.
+remote: Total 169 (delta 95), reused 169 (delta 95), pack-reused 0
+Receiving objects: 100% (169/169), 34.65 KiB | 0 bytes/s, done.
+Resolving deltas: 100% (95/95), done.
+Checking connectivity... done.
+```
+
+### Example Usage
+Update your path
+```python
+import sys
+sys.path.append('/path/to/repo')
+```
+
+### Example Usage:
 #### Import CUPI
 `from cupi.cake import CUPI`
 
