@@ -1,5 +1,9 @@
 ### CUPI is a Python module to manage Cisco Unity Connection via the CUPI REST API
 
+### Attention
+This project is no longer maintained. Please see: https://github.com/JugglerMaster/cupi for an updated version.
+
+
 ### Installation
 Clone repository
 ```bash
